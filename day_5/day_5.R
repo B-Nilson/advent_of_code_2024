@@ -53,13 +53,13 @@ updates[which(valid_updates)] |>
 
 invalid_updates <- updates[-which(valid_updates)]
 
+# Shift value 1 behind value 2 in each invalid rule
+#  until no more invalid rules remain (takes a minute or so)
 apply_rules <- function(update, rules) {
   passes <- update |> check_rules(rules)
   while (any(!passes)) {
     failed_rules <- rules[!passes, ]
-    cat(nrow(failed_rules), "failed rules\n")
     rule <- failed_rules[1, ] |> unlist()
-    # Shift value 1 behind value 2 in rule
     locs <- which(update == rule[1]) |>
       c(which(update == rule[2]))
     if (locs[2] == 1) {
@@ -76,6 +76,7 @@ apply_rules <- function(update, rules) {
   return(update)
 }
 
+# Fix invalid updates and report sum of middle values
 invalid_updates |>
   lapply(apply_rules, rules = rules) |>
   sapply(\(x) x[median(1:length(x))]) |>
