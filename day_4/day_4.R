@@ -5,22 +5,6 @@ write_answer <- function(x, part) {
     writeLines(out_file)
 }
 
-# Part 1 ---------------------------------------
-
-input <- "input.txt" |>
-  readLines()
-
-word_search <- input |>
-  stringr::str_split("", simplify = TRUE)
-
-verticals <- word_search |>
-  cbind(word_search[nrow(word_search):1, ]) |>
-  apply(2, paste, collapse = "")
-
-horizontals <- word_search |>
-  rbind(word_search[, ncol(word_search):1]) |>
-  apply(1, paste, collapse = "")
-
 get_diagonals <- function(matrix) {
   ndim <- nrow(matrix)
   offsets <- seq(-ndim + 1, ndim - 1)
@@ -40,27 +24,43 @@ get_diagonals <- function(matrix) {
 }
 
 rotate <- function(matrix, times = 1) {
-  times = times %% 4
-  if(times == 0) return(matrix)
-  rot = \(x) t(apply(x, 2, rev))
-  for(i in 1:times) {
-    matrix = rot(matrix)
+  times <- times %% 4
+  if (times == 0) {
+    return(matrix)
   }
+  rot <- \(x) t(apply(x, 2, rev))
+  for (i in 1:times) matrix <- rot(matrix)
   return(matrix)
 }
 
-diagnols <- c(
-  word_search |> get_diagonals(),
-  word_search |> rotate(1) |> get_diagonals(),
-  word_search |> rotate(2) |> get_diagonals(),
-  word_search |> rotate(3) |> get_diagonals()
-)
+# Part 1 ---------------------------------------
 
+input <- "input.txt" |>
+  readLines()
+
+word_search <- input |>
+  stringr::str_split("", simplify = TRUE)
+
+verticals <- word_search |>
+  # Include right -> left
+  cbind(word_search[nrow(word_search):1, ]) |>
+  apply(2, paste, collapse = "")
+
+horizontals <- word_search |>
+  # Include bottom -> top
+  rbind(word_search[, ncol(word_search):1]) |>
+  apply(1, paste, collapse = "")
+
+diagnols <- 0:3 |> # Get all 4 sets of diagnols
+  lapply(\(times) word_search |>
+    rotate(times) |> 
+    get_diagonals()) |>
+  unlist()
+
+# Combine and count occurences of "XMAS"
 c(verticals, horizontals, diagnols) |>
   stringr::str_count("XMAS") |>
   sum() |>
   write_answer(part = 1)
-
-
 
 # Part 2 ---------------------------------------
