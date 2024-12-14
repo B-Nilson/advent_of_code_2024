@@ -18,7 +18,8 @@ rule_entries <- 1:(which(input == "") - 1)
 rules <- input[rule_entries] |>
   stringr::str_split("\\|", simplify = TRUE) |>
   as.data.frame() |>
-  setNames(c("X", "Y"))
+  setNames(c("X", "Y")) |>
+  dplyr::arrange(X, Y)
 update_entries <- (which(input == "") + 1):length(input)
 updates <- input[update_entries] |>
   stringr::str_split(",") |>
@@ -34,13 +35,12 @@ check_rules <- function(update, rules) {
         return(TRUE)
       }
       a_loc < b_loc
-    }) |>
-    all()
+    })
 }
 
 # Check for valid updates
 valid_updates <- updates |>
-  sapply(check_rules, rules = rules)
+  sapply(\(update) all(check_rules(update, rules)))
 # Get the middle number from those and sum
 updates[which(valid_updates)] |>
   sapply(\(x) x[median(1:length(x))]) |>
@@ -48,5 +48,36 @@ updates[which(valid_updates)] |>
   write_answer(part = 1)
 
 # Part 2 ---------------------------------------
+## What do you get if you add up the middle page
+## numbers after correctly ordering just the unordered updates?
 
-# write_answer(part = 2)
+invalid_updates <- updates[-which(valid_updates)]
+
+apply_rules <- function(update, rules) {
+  passes <- update |> check_rules(rules)
+  while (any(!passes)) {
+    failed_rules <- rules[!passes, ]
+    cat(nrow(failed_rules), "failed rules\n")
+    rule <- failed_rules[1, ] |> unlist()
+    # Shift value 1 behind value 2 in rule
+    locs <- which(update == rule[1]) |>
+      c(which(update == rule[2]))
+    if (locs[2] == 1) {
+      update <- c(update[locs[1]], update[-locs[1]])
+    } else {
+      update <- c(
+        update[1:(locs[2] - 1)],
+        update[locs[1]],
+        update[locs[2]:length(update)]
+      ) |> unique()
+    }
+    passes <- update |> check_rules(rules)
+  }
+  return(update)
+}
+
+invalid_updates |>
+  lapply(apply_rules, rules = rules) |>
+  sapply(\(x) x[median(1:length(x))]) |>
+  sum() |>
+  write_answer(part = 2)
