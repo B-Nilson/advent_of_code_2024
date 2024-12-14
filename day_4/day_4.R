@@ -1,5 +1,3 @@
-# Functions ---------------------------------------
-
 # Generic function for outputing answer files
 write_answer <- function(x, part) {
   out_file <- paste0("answer_", part, ".txt")
