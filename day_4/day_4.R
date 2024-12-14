@@ -65,6 +65,45 @@ c(verticals, horizontals, diagnols) |>
 
 # Part 2 ---------------------------------------
 
-is_a <- word_search == "A"
+is_a <- (word_search == "A") |>
+  which(arr.ind = TRUE)
 
+patterns <- list(
+  c("M.S", ".A.", "M.S"),
+  c("M.M", ".A.", "S.S"),
+  c("S.S", ".A.", "M.M"),
+  c("S.M", ".A.", "S.M")
+)
 
+filter <- function(matrix, x, y, patterns) {
+  rows <- (x - 1):(x + 1)
+  cols <- (y - 1):(y + 1)
+  if (any(
+    rows < 0 | rows > nrow(matrix) |
+      cols < 0 | cols > ncol(matrix)
+  )) {
+    return(FALSE)
+  }
+  grid <- matrix[rows, cols] |>
+    paste(collapse = "")
+  patterns |>
+    sapply(\(pattern){
+      pattern <- pattern |>
+        paste(collapse = "")
+      grid |>
+        stringr::str_detect(pattern)
+    }) |>
+    any()
+}
+
+1:nrow(is_a) |>
+  sapply(\(i) {
+    word_search |>
+      filter(
+        x = is_a[i, 1],
+        y = is_a[i, 2],
+        patterns = patterns
+      )
+  }) |>
+  sum() |>
+  write_answer(part = 2)
