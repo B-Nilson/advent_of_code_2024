@@ -13,15 +13,54 @@ input <- "input.txt" |>
 word_search <- input |>
   stringr::str_split("", simplify = TRUE)
 
-count_xmas_occurence <- function(x) {
-  paste(x, collapse = "") |>
-    stringr::str_count("XMAS")
+verticals <- word_search |>
+  cbind(word_search[nrow(word_search):1, ]) |>
+  apply(2, paste, collapse = "")
+
+horizontals <- word_search |>
+  rbind(word_search[, ncol(word_search):1]) |>
+  apply(1, paste, collapse = "")
+
+get_diagonals <- function(matrix) {
+  ndim <- nrow(matrix)
+  offsets <- seq(-ndim + 1, ndim - 1)
+  offsets |>
+    lapply(\(i) {
+      if (i >= 0) { # Extract diagonal above or on the main diagonal
+        (1:(ndim - i)) |>
+          sapply(\(j) matrix[j, j + i]) |>
+          paste(collapse = "")
+      } else { # Extract diagonal below the main diagonal
+        (1:(ndim + i)) |>
+          sapply(\(j) matrix[j - i, j]) |>
+          paste(collapse = "")
+      }
+    }) |>
+    unlist()
 }
 
-word_search |>
-  apply(1, count_xmas_occurence) |>
-  sum()
+rotate <- function(matrix, times = 1) {
+  times = times %% 4
+  if(times == 0) return(matrix)
+  rot = \(x) t(apply(x, 2, rev))
+  for(i in 1:times) {
+    matrix = rot(matrix)
+  }
+  return(matrix)
+}
+
+diagnols <- c(
+  word_search |> get_diagonals(),
+  word_search |> rotate(1) |> get_diagonals(),
+  word_search |> rotate(2) |> get_diagonals(),
+  word_search |> rotate(3) |> get_diagonals()
+)
+
+c(verticals, horizontals, diagnols) |>
+  stringr::str_count("XMAS") |>
+  sum() |>
+  write_answer(part = 1)
+
 
 
 # Part 2 ---------------------------------------
-
