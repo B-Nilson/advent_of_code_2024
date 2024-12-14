@@ -1,3 +1,4 @@
+# Generic function for outputing answer files
 write_answer <- function(x, part) {
   out_file <- paste0("answer_", part, ".txt")
   x |>
@@ -6,6 +7,7 @@ write_answer <- function(x, part) {
 }
 
 # Part 1 ---------------------------------------
+## How many reports are safe?
 
 input <- "input.txt" |>
   readLines()
@@ -30,8 +32,11 @@ reports |>
   write_answer(part = 1)
 
 # Part 2 ---------------------------------------
+## Update your analysis by handling situations where the
+## Problem Dampener can remove a single level from unsafe reports.
+## How many reports are now safe?
 
-problem_dampener = function(levels){
+problem_dampener <- function(levels) {
   1:length(levels) |>
     sapply(\(i) levels[-i] |> is_safe()) |>
     any()
