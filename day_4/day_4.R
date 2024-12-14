@@ -18,7 +18,6 @@ count_xmas_occurence <- function(x) {
     stringr::str_count("XMAS")
 }
 
-
 word_search |>
   apply(1, count_xmas_occurence) |>
   sum()
