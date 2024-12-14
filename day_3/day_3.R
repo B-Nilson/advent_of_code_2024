@@ -10,19 +10,20 @@ write_answer <- function(x, part) {
 input <- "input.txt" |>
   readLines()
 
-extract_valid_muls = function(lines) {
-  pattern = "mul\\(\\d*?,\\d*?\\)"
+extract_valid_muls <- function(lines) {
+  pattern <- "mul\\(\\d*?,\\d*?\\)"
   lines |>
-    stringr::str_extract_all(pattern, simplify = TRUE) |>
-    as.vector()
-} 
+    stringr::str_extract_all(pattern) |>
+    unlist()
+}
 
-do_mul = function(muls) {
+do_mul <- function(muls) {
+  mul_row <- \(mul) as.numeric(mul[1]) * as.numeric(mul[2])
   muls |>
     stringr::str_remove_all("mul\\(|\\)") |>
     stringr::str_split(",", simplify = TRUE) |>
-    apply(2, as.numeric) |>
-    apply(1, \(mul) mul[1] * mul[2])
+apply(1, mul_row)
+
 }
 
 input |>
