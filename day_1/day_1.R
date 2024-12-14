@@ -1,3 +1,4 @@
+# Generic function for outputing answer files
 write_answer <- function(x, part) {
   out_file <- paste0("answer_", part, ".txt")
   x |>
@@ -6,6 +7,7 @@ write_answer <- function(x, part) {
 }
 
 # Part 1 ---------------------------------------
+## What is the total distance between your lists?
 
 input_list <- "input.txt" |>
   data.table::fread()
@@ -19,17 +21,17 @@ list_b <- sort(input_list$V2)
   write_answer(part = 1)
 
 # Part 2 --------------------------------------
+## What is their similarity score? sum(value * occurences)
 
-occurences <- list_a |>
-  data.frame() |>
+# Get occurences of list_a values in list_b
+occurences <- data.frame(list_a) |>
   dplyr::left_join(
     plyr::count(list_b),
-    by = c(list_a = "x"),
+    by <- c(list_a = "x")
   )
 
-with(
-  occurences,
-  list_a * ifelse(is.na(freq), 0, freq)
-) |>
+# Calulcate similarity score
+occurences |>
+  with(list_a * ifelse(is.na(freq), 0, freq)) |>
   sum() |>
   write_answer(part = 2)
