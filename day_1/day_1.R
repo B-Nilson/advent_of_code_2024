@@ -1,3 +1,10 @@
+write_answer <- function(x, part) {
+  out_file <- paste0("answer_", part, ".txt")
+  x |>
+    as.character() |>
+    writeLines(out_file)
+}
+
 # Part 1 ---------------------------------------
 
 input_list <- "input.txt" |>
@@ -9,8 +16,7 @@ list_b <- sort(input_list$V2)
 (list_b - list_a) |>
   abs() |>
   sum() |>
-  as.character() |>
-  writeLines("answer_1.txt")
+  write_answer(part = 1)
 
 # Part 2 --------------------------------------
 
@@ -26,5 +32,4 @@ with(
   list_a * ifelse(is.na(freq), 0, freq)
 ) |>
   sum() |>
-  as.character() |>
-  writeLines("answer_2.txt")
+  write_answer(part = 2)
