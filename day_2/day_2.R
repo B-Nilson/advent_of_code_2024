@@ -9,10 +9,8 @@ write_answer <- function(x, part) {
 # Part 1 ---------------------------------------
 ## How many reports are safe?
 
-input <- "input.txt" |>
-  readLines()
-
-reports <- input |>
+reports <- "input.txt" |>
+  readLines() |>
   stringr::str_split(" ")
 
 is_safe <- function(levels) {
