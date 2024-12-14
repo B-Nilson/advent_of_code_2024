@@ -30,3 +30,14 @@ reports |>
   write_answer(part = 1)
 
 # Part 2 ---------------------------------------
+
+problem_dampener = function(levels){
+  1:length(levels) |>
+    sapply(\(i) levels[-i] |> is_safe()) |>
+    any()
+}
+
+reports |>
+  sapply(problem_dampener) |>
+  sum() |>
+  write_answer(part = 2)
