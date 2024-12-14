@@ -65,16 +65,6 @@ c(verticals, horizontals, diagnols) |>
 
 # Part 2 ---------------------------------------
 
-input |>
-  paste(collapse = "\n") |>
-  cat()
-
 is_a <- word_search == "A"
 
-mas_locs <- diagnols |>
-  stringr::str_locate_all("MAS") |>
-  setNames((1:length(diagnols)) %% (length(diagnols) / 4)) |>
-  lapply(data.frame) |>
-  dplyr::bind_rows(.id = "diagnol") |>
-  dplyr::group_by(diagnol) |>
-  dplyr::mutate(rotation = 1:dplyr::n() - 1) |> View()
+
