@@ -10,6 +10,18 @@ write_answer <- function(x, part) {
 input <- "input.txt" |>
   readLines()
 
+word_search <- input |>
+  stringr::str_split("", simplify = TRUE)
+
+count_xmas_occurence <- function(x) {
+  paste(x, collapse = "") |>
+    stringr::str_count("XMAS")
+}
+
+
+word_search |>
+  apply(1, count_xmas_occurence) |>
+  sum()
 
 
 # Part 2 ---------------------------------------
