@@ -11,51 +11,100 @@ write_answer <- function(x, part) {
 ## How many distinct positions will the guard visit
 ##   before leaving the mapped area?
 
+# Load map as matrix of individual character
+
 starting_map <- "input.txt" |>
   readLines() |>
   stringr::str_split("", simplify = TRUE)
 
+get_guard_loc <- function(map, guards) {
+  (map %in% guards) |>
+    array(dim(map)) |>
+    which(arr.ind = TRUE)
+}
 
-move_guard <- function(map) {
-  guards <- c("^", ">", "v", "<")
-  obstructions <- "#"
-  guard_loc <- which(array(map %in% guards, dim(map)), arr.ind = TRUE)
-  if (nrow(guard_loc) == 0) stop("The guard has left the map.")
-  guard <- map[guard_loc]
-  guard_loc_old <- guard_loc
+get_path_forward <- function(map, guard, guard_loc) {
   if (guard == "^") {
-    path_forward <- map[guard_loc[1]:1, guard_loc[2]]
-    nearest_obstruction <- which(path_forward == obstructions)[1]
-    if (is.na(nearest_obstruction)) nearest_obstruction <- length(path_forward) + 1
-    guard_loc[1] <- guard_loc[1] - nearest_obstruction + 2
+    map[guard_loc[1]:1, guard_loc[2]]
+  } else if (guard == ">") {
+    map[guard_loc[1], guard_loc[2]:ncol(map)]
+  } else if (guard == "v") {
+    map[guard_loc[1]:nrow(map), guard_loc[2]]
+  } else if (guard == "<") {
+    map[guard_loc[1], guard_loc[2]:1]
+  }
+}
+
+updated_path_walked <- function(map, guard, guard_loc_old, guard_loc) {
+  if (guard == "^") {
     map[guard_loc_old[1]:guard_loc[1], guard_loc[2]] <- "X"
   } else if (guard == ">") {
-    path_forward <- map[guard_loc[1], guard_loc[2]:ncol(map)]
-    nearest_obstruction <- which(path_forward == obstructions)[1]
-    guard_loc[2] <- guard_loc[2] + nearest_obstruction - 2
     map[guard_loc[1], guard_loc_old[2]:guard_loc[2]] <- "X"
   } else if (guard == "v") {
-    path_forward <- map[guard_loc[1]:nrow(map), guard_loc[2]]
-    nearest_obstruction <- which(path_forward == obstructions)[1]
-    guard_loc[1] <- guard_loc[1] + (nearest_obstruction - 2)
     map[guard_loc_old[1]:guard_loc[1], guard_loc[2]] <- "X"
   } else if (guard == "<") {
-    path_forward <- map[guard_loc[1], guard_loc[2]:1]
-    nearest_obstruction <- which(path_forward == obstructions)[1]
-    guard_loc[2] <- guard_loc[2] - nearest_obstruction + 2
     map[guard_loc[1], guard_loc_old[2]:guard_loc[2]] <- "X"
   }
+  return(map)
+}
 
-  if (any(guard_loc == 1) | guard_loc[1] == nrow(map) | guard_loc[2] == ncol(map)) {
-    return(map)
+get_next_guard <- function(guard, guards) {
+  next_guard <- (which(guards == guard) + 1) %% length(guards)
+  guards[ifelse(next_guard == 0, length(guards), next_guard)]
+}
+
+
+move_guard <- function(map) {
+# Get current coords of guard and direction she faces
+
+  guards <- c("^", ">", "v", "<")
+guard_loc <- map |> get_guard_loc(guards)
+
+  if (nrow(guard_loc) == 0) stop("The guard has left the map.")
+  guard <- map[guard_loc]
+# Determine nearest obstruction in direction she faces
+path_forward <- map |>
+  get_path_forward(guard, guard_loc)
+obstructions <- "#"
+nearest_obstruction <- which(path_forward == obstructions)[1]
+if (is.na(nearest_obstruction)) {
+  # Handle guard exiting
+  nearest_obstruction <- length(path_forward) + 1
+  next_guard <- "X"
+} else {
+  # If guard is still on map, rotate her 90 degrees
+  next_guard <- guard |> get_next_guard(guards)
+}
+
+# Move guard to just before nearest obstruction, replace path with "X"
+
+  guard_loc_old <- guard_loc
+  if (guard == "^") {
+guard_loc[1] <- guard_loc[1] - nearest_obstruction + 2
+
+
+  } else if (guard == ">") {
+guard_loc[2] <- guard_loc[2] + nearest_obstruction - 2
+
+
+  } else if (guard == "v") {
+guard_loc[1] <- guard_loc[1] + (nearest_obstruction - 2)
+
+
+  } else if (guard == "<") {
+guard_loc[2] <- guard_loc[2] - nearest_obstruction + 2
+
+
   }
-  next_guard <- (which(guards == guard) + 1) %% 4
-  map[guard_loc] <- guards[ifelse(next_guard == 0, 4, next_guard)]
+map <- map |> updated_path_walked(guard, guard_loc_old, guard_loc)
+map[guard_loc] <- next_guard
+
+
   return(map)
 }
 
 travel_map <- starting_map
-for (i in 1:1400) {
+while(TRUE) {
   travel_map <- move_guard(travel_map)
 }
 
