@@ -40,11 +40,11 @@ updated_path_walked <- function(map, guard, guard_loc_old, guard_loc) {
     rows = guard_loc_old[1]:guard_loc[1]
     map[rows, guard_loc[2]] <- 1:length(rows)
   } else if (guard == ">") {
-    map[guard_loc[1], guard_loc_old[2]:guard_loc[2]] <- values
+    map[guard_loc[1], guard_loc_old[2]:guard_loc[2]] <- "X"
   } else if (guard == "v") {
-    map[guard_loc_old[1]:guard_loc[1], guard_loc[2]] <- values
+    map[guard_loc_old[1]:guard_loc[1], guard_loc[2]] <- "X"
   } else if (guard == "<") {
-    map[guard_loc[1], guard_loc_old[2]:guard_loc[2]] <- values
+    map[guard_loc[1], guard_loc_old[2]:guard_loc[2]] <- "X"
   }
   return(map)
 }
