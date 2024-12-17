@@ -57,9 +57,6 @@ check_equation = function(answer, values, operators) {
       dplyr::mutate(total = expression |> eval_math()) |> 
       # Drop any that exceed the expected total 
       dplyr::filter(total <= answer)
-    if(answer %in% results$total) {
-      break
-    }
   }
   # Evaluate if answer possible
   answer %in% results$total
