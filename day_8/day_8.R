@@ -12,44 +12,45 @@ write_answer <- function(x, part) {
 freq_map <- "input.txt" |>
   readLines() |>
   stringr::str_split("", simplify = TRUE)
-freq_map[freq_map == "."] = NA
+freq_map[freq_map == "."] <- NA
 
-frequencies = freq_map |>
+frequencies <- freq_map |>
   as.vector() |>
   unique() |>
   sort()
 
-get_antinodes = function(frequencies, freq_map) {
-  max_dims = dim(freq_map)
-  frequencies |> lapply(\(frequency){
-    locs = (freq_map == frequency) |>
-      which(arr.ind = TRUE) |>
-      as.data.frame() |>
-      dplyr::mutate(id = 1:dplyr::n())
-    locs |> apply(1, \(loc){
-      other_locs = locs[locs$id != loc[3], ]
-      other_locs$row = loc[1] + 2 * (other_locs$row - loc[1])
-      other_locs$col <- loc[2] + 2 * (other_locs$col - loc[2])
-      return(other_locs[, 1:2])
+get_antinodes <- function(frequencies, freq_map) {
+  max_dims <- dim(freq_map)
+  frequencies |>
+    lapply(\(frequency){
+      locs <- (freq_map == frequency) |>
+        which(arr.ind = TRUE) |>
+        as.data.frame() |>
+        dplyr::mutate(id = 1:dplyr::n())
+      locs |>
+        apply(1, \(loc){
+          other_locs <- locs[locs$id != loc[3], ]
+          row <- loc[1] + 2 * (other_locs$row - loc[1])
+          col <- loc[2] + 2 * (other_locs$col - loc[2])
+          data.frame(row, col)
+        }) |>
+        dplyr::bind_rows() |>
+        dplyr::filter(
+          row > 0, row <= max_dims[2],
+          col > 0, col <= max_dims[1]
+        )
     }) |>
-      dplyr::bind_rows() |>
-      dplyr::filter(
-        row > 0, row <= max_dims[2],
-        col > 0, col <= max_dims[1] 
-      )
-  }) |> setNames(frequencies)
+    setNames(frequencies)
 }
 
-antinodes = frequencies |> 
-  get_antinodes(freq_map)
-
-antinodes |>
+frequencies |>
+  get_antinodes(freq_map) |>
   dplyr::bind_rows() |>
-  dplyr::distinct() |> 
+  dplyr::distinct() |>
   nrow() |>
   write_answer(part = 1)
 
 
 # Part 2 ---------------------------------------
-
+# Using the update model, how many unique locations within the bounds of the map contain an antinode?
 # write_answer(part = 2)
