@@ -6,71 +6,70 @@ write_answer <- function(x, part) {
     writeLines(out_file)
 }
 
-# Part 1 ---------------------------------------
-
-input <- "input.txt" |>
-  readLines()
-
-topography <- input |>
-  stringr::str_split("") |>
-  sapply(as.integer) |>
-  t()
-
-trailheads <- which(topography == 0, arr.ind = TRUE)
 path_finder <- function(topography, position) {
-  # Get all possible directions including center
-  locations <- data.frame(
-    direction = c(NA, 1:4) |> factor(labels = c("N", "E", "S", "W")),
-    row = position[1] + c(0, 1, 0, -1, 0),
-    col = position[2] + c(0, 0, 1, 0, -1)
+  # Get all possible neigbours
+  neighbours <- data.frame(
+    direction = c("N", "E", "S", "W"),
+    row = position[1] + c(1, 0, -1, 0),
+    col = position[2] + c(0, 1, 0, -1)
   ) |>
-    # Drop any that are out of bounds
     dplyr::filter(
       row > 0 & row <= nrow(topography),
       col > 0 & col <= ncol(topography)
     )
-  # If center is 9, we're done
-  center = topography[locations[1, 2], locations[1, 3]]
-  if(center == 9) {
-    index = (position[2] * nrow(topography) + position[1]) |>
-      unname()
+
+  # If center is 9, return its index
+  center <- topography[t(position)]
+  if (center == 9) {
+    index <- unname(position[2] * nrow(topography) + position[1])
     return(index)
   }
+
   # Get any directions that are 1 step higher than center
-  next_steps <- locations[-1, ] |>
+  next_steps <- neighbours |>
     apply(1, \(nbr) {
-      nbr <- as.numeric(nbr[2:3])
-      topography[nbr[1], nbr[2]] == (center + 1)
+      loc <- as.numeric(nbr[2:3])
+      topography[t(loc)] == (center + 1)
     }) |>
-    setNames(locations$direction[-1]) |>
+    setNames(neighbours$direction) |>
     unlist()
   next_steps <- next_steps[next_steps]
 
-  if(length(next_steps) == 0) {
-    return(NULL)
-  }
-
-  names(next_steps) |> lapply(\(step) {
-    step_coords <- locations[-1, ][locations[-1, ]$direction == step, 2:3] |>
+  if (length(next_steps) == 0) {
+    return(NULL) # end path if no next steps
+  } else {
+    # Iterate through the next steps until path ends
+    # return vector of path ending indices named N.S.S.S.E.E.E.N.W (for example)
+    names(next_steps) |>
+      setNames(names(next_steps)) |>
+      lapply(\(step) {
+        row <- neighbours$direction == step
+        unlist(neighbours[row, 2:3]) |>
+          path_finder(topography = topography)
+      }) |>
       unlist()
-    path_finder(topography, step_coords)
-  }) |> setNames(names(next_steps)) |>
-    unlist()
+  }
 }
 
-paths = trailheads |>
+# Part 1 ---------------------------------------
+
+topography <- "input.txt" |>
+  readLines() |>
+  stringr::str_split("") |>
+  sapply(as.integer) |>
+  t()
+
+paths <- (topography == 0) |>
+  which(arr.ind = TRUE) |>
   apply(1, path_finder, topography = topography)
 
+scores <- paths |>
+  sapply(\(x) length(unique(x)))
 
-trailheads = trailheads |>
-  data.frame() |>
-  dplyr::mutate(score = sapply(paths, \(x) length(unique(x))))
-
-sum(trailheads$score) |> write_answer(part = 1)
+sum(scores) |> write_answer(part = 1)
 
 # Part 2 ---------------------------------------
 
-trailheads$rating = sapply(paths, \(x) length(x))
+ratings <- sapply(paths, length)
 
-sum(trailheads$rating) |> write_answer(part = 2)
-
+sum(ratings) |> write_answer(part = 2)
