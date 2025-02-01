@@ -70,4 +70,7 @@ sum(trailheads$score) |> write_answer(part = 1)
 
 # Part 2 ---------------------------------------
 
-# write_answer(part = 2)
+trailheads$rating = sapply(paths, \(x) length(x))
+
+sum(trailheads$rating) |> write_answer(part = 2)
+
