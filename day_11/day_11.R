@@ -6,13 +6,39 @@ write_answer <- function(x, part) {
     writeLines(out_file)
 }
 
+split_strings <- function(strings) {
+  strings |> sapply(\(x) {
+    middle <- ceiling(nchar(x) / 2)
+    stringr::str_sub(x, 1, middle) |>
+      c(stringr::str_sub(x, middle + 1))
+  })
+}
+
 # Part 1 ---------------------------------------
 
 input <- "input.txt" |>
-  readLines()
+  readLines() |>
+  stringr::str_split(" ", simplify = TRUE) |>
+  as.integer()
 
-# write_answer(part = 1)
+blinks <- 25
+stones <- input
+for (blink in 1:blinks) {
+  stones <- stones |>
+    lapply(\(stone){
+      if (stone == 0) {
+        new_stone <- 1
+      } else if (nchar(stone) %% 2 == 0) {
+        new_stone <- split_string(stone) |> as.numeric()
+      } else {
+        new_stone <- as.numeric(stone) * 2024
+      }
+      as.character(new_stone)
+    }) |>
+    unlist()
+}
 
+length(stones) |> write_answer(part = 1)
 
 # Part 2 ---------------------------------------
 
