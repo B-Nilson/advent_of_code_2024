@@ -6,12 +6,50 @@ write_answer <- function(x, part) {
     writeLines(out_file)
 }
 
-split_strings <- function(strings) {
-  strings |> sapply(\(x) {
-    middle <- ceiling(nchar(x) / 2)
-    stringr::str_sub(x, 1, middle) |>
-      c(stringr::str_sub(x, middle + 1))
-  })
+ndigits <- function(x) {
+  ifelse(x == 0, 1, floor(log10(x)) + 1)
+}
+
+split_numbers <- function(numbers, digits = NULL) {
+  if (is.null(digits)) digits <- ndigits(numbers)
+  denom <- 10^(digits - digits / 2)
+  start <- as.integer(numbers / denom)
+  end <- numbers - start * denom
+  c(start, end)
+}
+
+combine_counts <- function(counts) {
+  is_duplicated <- names(counts) %in%
+    names(counts)[duplicated(names(counts))]
+  duplicates <- counts[is_duplicated]
+  if(length(duplicates) == 0) return(counts)
+
+  unique(names(duplicates)) |>
+    sapply(\(x) duplicates[names(duplicates) == x] |>
+      sum()) |>
+    c(counts[!is_duplicated])
+}
+
+blink_stones <- function(counts) {
+  labels <- as.numeric(names(counts))
+  digits <- ndigits(labels)
+  new_counts = counts
+
+  zeroes <- labels == 0
+  evens <- digits %% 2 == 0
+  others <- !zeroes & !evens
+
+  names(new_counts)[others] <- labels[others] * 2024
+  names(new_counts)[zeroes] <- 1
+  if (any(evens)) {
+    split_labels <- labels[evens] |>
+      split_numbers(digits[evens])
+    split_counts <- rep(counts[evens], 2) |>
+      setNames(split_labels)
+    new_counts <- c(new_counts[!names(counts) %in% labels[evens]], split_counts) |>
+      combine_counts()
+  }
+  return(new_counts)
 }
 
 # Part 1 ---------------------------------------
@@ -23,23 +61,19 @@ input <- "input.txt" |>
 
 blinks <- 25
 stones <- input
+counts <- table(stones)
 for (blink in 1:blinks) {
-  stones <- stones |>
-    lapply(\(stone){
-      if (stone == 0) {
-        new_stone <- 1
-      } else if (nchar(stone) %% 2 == 0) {
-        new_stone <- split_string(stone) |> as.numeric()
-      } else {
-        new_stone <- as.numeric(stone) * 2024
-      }
-      as.character(new_stone)
-    }) |>
-    unlist()
+  counts <- blink_stones(counts)
 }
 
-length(stones) |> write_answer(part = 1)
+sum(counts) |> write_answer(part = 1)
 
 # Part 2 ---------------------------------------
 
-# write_answer(part = 2)
+blinks <- 75
+counts <- table(stones)
+for (blink in 1:blinks) {
+  counts <- blink_stones(counts)
+}
+
+sum(counts) |> write_answer(part = 2)
