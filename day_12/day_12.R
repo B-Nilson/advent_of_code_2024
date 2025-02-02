@@ -9,10 +9,28 @@ write_answer <- function(x, part) {
 # Part 1 ---------------------------------------
 
 input <- "input.txt" |>
-  readLines()
+  readLines() |>
+  stringr::str_split("", simplify = TRUE)
 
-# write_answer(part = 1)
+garden <- input |>
+  matrix(ncol = ncol(input)) |> 
+  terra::rast(crs = "local")
 
+fence_polygons = garden |>
+  terra::as.polygons() |>
+  sf::st_as_sf() |>
+  sf::st_cast("POLYGON") |>
+  terra::vect()
+
+fences <- data.frame(
+  perim = terra::perim(fence_polygons),
+  area = terra::expanse(fence_polygons)
+) |>
+  dplyr::mutate(
+    cost = perim * area
+  )
+
+sum(fences$cost) |> write_answer(part = 1)
 
 # Part 2 ---------------------------------------
 
