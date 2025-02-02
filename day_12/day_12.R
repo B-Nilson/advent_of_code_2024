@@ -12,16 +12,13 @@ input <- "input.txt" |>
   readLines() |>
   stringr::str_split("", simplify = TRUE)
 
-garden <- input |>
-  matrix(ncol = ncol(input)) |> 
-  terra::rast(crs = "local")
-
-fence_polygons = garden |>
+fence_polygons <- input |>
+  matrix(ncol = ncol(input)) |>
+  terra::rast(crs = "local") |>
   terra::as.polygons() |>
   sf::st_as_sf() |>
-  sf::st_cast("POLYGON") |>
-  dplyr::rename(plant = lyr.1) |> 
-  dplyr::group_by(plant) |>
+  sf::st_cast("POLYGON", warn = FALSE) |>
+  dplyr::group_by(plant = lyr.1) |>
   dplyr::mutate(id = 1:dplyr::n()) |>
   terra::vect()
 
@@ -31,9 +28,7 @@ fences <- data.frame(
   perim = terra::perim(fence_polygons),
   area = terra::expanse(fence_polygons)
 ) |>
-  dplyr::mutate(
-    cost = perim * area
-  )
+  dplyr::mutate(cost = perim * area)
 
 sum(fences$cost) |> write_answer(part = 1)
 
@@ -46,11 +41,8 @@ side_counts <- fence_polygons |>
   dplyr::group_by(plant, id) |>
   dplyr::summarise(sides = dplyr::n(), .groups = "drop")
 
-fences = fences |>
-  dplyr::select(-dplyr::any_of("sides")) |>
+fences <- fences |>
   dplyr::left_join(side_counts, by = c("plant", "id")) |>
-  dplyr::mutate(
-    cost_discount = sides * area
-  )
+  dplyr::mutate(cost_discount = sides * area)
 
-  sum(fences$cost_discount) |>  write_answer(part = 2)
+sum(fences$cost_discount) |> write_answer(part = 2)
