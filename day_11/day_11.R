@@ -7,11 +7,12 @@ write_answer <- function(x, part) {
 }
 
 ndigits <- function(x) {
-  ifelse(x == 0, 1, floor(log10(x)) + 1)
+  x <- log10(x) %/% 1 + 1
+  x[x < 1] <- 1
+  return(x)
 }
 
-split_numbers <- function(numbers, digits = NULL) {
-  if (is.null(digits)) digits <- ndigits(numbers)
+split_numbers <- function(numbers, digits) {
   denom <- 10^(digits - digits / 2)
   start <- as.integer(numbers / denom)
   end <- numbers - start * denom
@@ -19,37 +20,42 @@ split_numbers <- function(numbers, digits = NULL) {
 }
 
 combine_counts <- function(counts) {
-  is_duplicated <- names(counts) %in%
-    names(counts)[duplicated(names(counts))]
+  values <- names(counts)
+  is_duplicated <- values %in% values[duplicated(values)]
+  if (all(!is_duplicated)) {
+    return(counts)
+  }
+  # combine duplicates
   duplicates <- counts[is_duplicated]
-  if(length(duplicates) == 0) return(counts)
-
-  unique(names(duplicates)) |>
-    sapply(\(x) duplicates[names(duplicates) == x] |>
-      sum()) |>
+  values <- names(duplicates)
+  unique(values) |>
+    sapply(\(value) sum(duplicates[values == value])) |>
     c(counts[!is_duplicated])
 }
 
 blink_stones <- function(counts) {
-  labels <- as.numeric(names(counts))
-  digits <- ndigits(labels)
-  new_counts = counts
-
-  zeroes <- labels == 0
-  evens <- digits %% 2 == 0
-  others <- !zeroes & !evens
-
-  names(new_counts)[others] <- labels[others] * 2024
+  if (is.null(names(counts))) counts <- table(counts)
+  values <- names(counts) |> as.numeric()
+  digits <- ndigits(values)
+  zeroes <- values == 0 # rule 1
+  evens <- digits %% 2 == 0 # rule 2
+  others <- !zeroes & !evens # rule 3
+  # apply rule 1 and 3
+  new_counts <- counts
   names(new_counts)[zeroes] <- 1
-  if (any(evens)) {
-    split_labels <- labels[evens] |>
-      split_numbers(digits[evens])
-    split_counts <- rep(counts[evens], 2) |>
-      setNames(split_labels)
-    new_counts <- c(new_counts[!names(counts) %in% labels[evens]], split_counts) |>
-      combine_counts()
+  names(new_counts)[others] <- values[others] * 2024
+  if (!any(evens)) {
+    return(new_counts)
   }
-  return(new_counts)
+  # handle rule 2 if needed
+  split_values <- values[evens] |>
+    split_numbers(digits[evens])
+  split_counts <- rep(counts[evens], 2) |>
+    setNames(split_values)
+  old_entries <- names(counts) %in% values[evens]
+  new_counts[!old_entries] |>
+    c(split_counts) |>
+    combine_counts()
 }
 
 # Part 1 ---------------------------------------
@@ -61,19 +67,18 @@ input <- "input.txt" |>
 
 blinks <- 25
 stones <- input
-counts <- table(stones)
 for (blink in 1:blinks) {
-  counts <- blink_stones(counts)
+  stones <- blink_stones(stones)
 }
 
-sum(counts) |> write_answer(part = 1)
+sum(stones) |> write_answer(part = 1)
 
 # Part 2 ---------------------------------------
 
 blinks <- 75
-counts <- table(stones)
+stones <- input
 for (blink in 1:blinks) {
-  counts <- blink_stones(counts)
+  stones <- blink_stones(stones)
 }
 
-sum(counts) |> write_answer(part = 2)
+sum(stones) |> write_answer(part = 2)
