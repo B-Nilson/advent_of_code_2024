@@ -6,22 +6,10 @@ write_answer <- function(x, part) {
     writeLines(out_file)
 }
 
-move_robots <- function(robots) {
-  robots |>
-    dplyr::mutate(
-      p.x = wrap_grid(p.x + v.x, room_dimensions[1]),
-      p.y = wrap_grid(p.y + v.y, room_dimensions[2]),
-      quadrant = get_quadrant(p.x, p.y, room_dimensions),
-      time = time + 1
-    )
-}
-
-wrap_grid <- function(position, max_value) {
-  dplyr::case_when(
-    position < 1 ~ max_value + position,
-    position > max_value ~ 0 + position %% max_value,
-    TRUE ~ position
-  )
+move_robots <- function(robots, dims) {
+  robots[, 1] <- (robots[, 1] + robots[, 3] - 1) %% dims[1] + 1
+  robots[, 2] <- (robots[, 2] + robots[, 4] - 1) %% dims[2] + 1
+  return(robots)
 }
 
 get_quadrant <- function(x, y, dims) {
@@ -33,13 +21,21 @@ get_quadrant <- function(x, y, dims) {
     x > mids[1] & y > mids[2] ~ 4,
     TRUE ~ NA
   )
-  if(mids[1] %% 1 != 0) {
+  if (mids[1] %% 1 != 0) {
     quadrants[mids[1] + 1, ] <- NA
   }
-  if(mids[2] %% 1 != 0) {
+  if (mids[2] %% 1 != 0) {
     quadrants[, mids[2] + 1] <- NA
   }
   return(quadrants)
+}
+
+get_safety_score <- function(robots, dims) {
+  safety_factors = get_quadrant(robots[, 1], robots[, 2], dims) |>
+    table()
+  safety_score <- 1
+  for (sf in safety_factors) safety_score <- safety_score * sf
+  return(safety_score)
 }
 
 # Part 1 ---------------------------------------
@@ -52,40 +48,28 @@ room_dimensions <- c(101, 103)
 robots_initial <- input |>
   stringr::str_remove_all("p=|v=") |>
   stringr::str_split(" |,", simplify = TRUE) |>
-  apply(2, as.numeric) |>
-  data.frame() |>
-  setNames(c("p.x", "p.y", "v.x", "v.y")) |>
-  dplyr::mutate(
-    p.x = p.x + 1, # starts at 0 -> 1
-    p.y = p.y + 1, # starts at 0 -> 1
-    robot = 1:dplyr::n(),
-    time = 0
-  )
+  apply(2, as.numeric)
+robots_initial[, 1:2] <- robots_initial[, 1:2] + 1
 
-robot_movements <- list(robots_initial)
+robots <- robots_initial
 for (i in 1:100) {
-  robot_movements[[i + 1]] <- move_robots(robot_movements[[i]])
+  robots <- move_robots(robots, room_dimensions)
 }
 
-safety_factors <- robot_movements |>
-  dplyr::last() |>
-  dplyr::filter(!is.na(quadrant)) |>
-  dplyr::group_by(quadrant) |>
-  dplyr::summarise(
-    count = dplyr::n(),
-    .groups = "drop"
-  ) |>
-  dplyr::pull(count)
-total_sf <- 1
-for (sf in safety_factors) {
-  total_sf <- total_sf * sf
-}
-
-total_sf |>
+get_safety_score(robots, room_dimensions) |> 
   write_answer(part = 1)
 
-
-
 # Part 2 ---------------------------------------
+
+max_iterations = room_dimensions[1] * room_dimensions[2]
+
+robot_movements = list(robots_initial)
+safety_scores = c(get_safety_score(robots_initial, room_dimensions))
+for(i in 1:max_iterations) {
+  robot_movements[[i + 1]] <- move_robots(robot_movements[[i]], room_dimensions)
+  safety_scores[i + 1] <- get_safety_score(robot_movements[[i + 1]], room_dimensions)
+}
+
+which.min(safety_scores)
 
 # write_answer(part = 2)
